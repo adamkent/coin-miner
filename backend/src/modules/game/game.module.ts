@@ -1,7 +1,19 @@
 import { Module } from '@nestjs/common';
 import { GameController } from './game.controller';
 import { GameService } from './game.service';
-import { PrismaService } from '../../prisma.service';
+import { PrismaClient } from '@prisma/client';
+import { PrismaRepository } from './prisma.repository';
 
-@Module({ controllers: [GameController], providers: [GameService, PrismaService] })
+@Module({
+  controllers: [GameController],
+  providers: [
+    PrismaClient,
+    { provide: 'GameRepository', useClass: PrismaRepository },
+    {
+      provide: GameService,
+      useFactory: (repo: any) => new GameService(repo),
+      inject: ['GameRepository'],
+    },
+  ],
+})
 export class GameModule {}

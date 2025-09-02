@@ -1,17 +1,29 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { GameService } from './game.service';
+import { UpgradeType } from './game.types';
 
 @Controller()
 export class GameController {
   constructor(private readonly svc: GameService) {}
 
-  @Get('state') getState() { return this.svc.getState(); }
-
-  @Post('mine') mine() { return this.svc.mine(); }
-
-  @Post('purchase') purchase(@Body() body: { upgrade: 'autoMiner'|'superClick' }) {
-    return this.svc.purchase(body.upgrade);
+  // In real app you'd get userId from auth/session; here accept body/query for simplicity
+  @Get('state')
+  getState() {
+    return this.svc.getState('demo');
   }
 
-  @Post('collect') collect() { return this.svc.collect(); }
+  @Post('mine')
+  mine() {
+    return this.svc.mine('demo');
+  }
+
+  @Post('purchase')
+  purchase(@Body() body: { upgrade: UpgradeType }) {
+    return this.svc.purchase('demo', body.upgrade);
+  }
+
+  @Post('collect')
+  collect() {
+    return this.svc.collect('demo');
+  }
 }
