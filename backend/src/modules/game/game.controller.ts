@@ -23,7 +23,7 @@ export class GameController {
 
   @Post('mine')
   @ApiOperation({ summary: 'Mine coins (with 5s cooldown)' })
-  @ApiResponse({ status: 200, description: 'Updated game state after mining' })
+  @ApiResponse({ status: 201, description: 'Updated game state after mining' })
   @ApiResponse({ status: 400, description: 'Cooldown active' })
   async mine() {
     try {
@@ -45,7 +45,7 @@ export class GameController {
       superClick: { value: { upgrade: 'superClick' } }
     }
   })
-  @ApiResponse({ status: 200, description: 'Updated game state after purchase' })
+  @ApiResponse({ status: 201, description: 'Updated game state after purchase' })
   @ApiResponse({ status: 400, description: 'Not enough coins' })
   async purchase(@Body() body: PurchaseDto) {
     try {
@@ -60,7 +60,7 @@ export class GameController {
 
   @Post('collect')
   @ApiOperation({ summary: 'Collect idle coins from auto-miners' })
-  @ApiResponse({ status: 200, description: 'Collected coins and updated state' })
+  @ApiResponse({ status: 201, description: 'Collected coins and updated state' })
   async collect() {
     try {
       return await this.svc.collect('demo');

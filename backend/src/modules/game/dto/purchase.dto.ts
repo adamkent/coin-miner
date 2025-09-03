@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn } from 'class-validator';
-import { UpgradeType } from '../game.types';
+import type { UpgradeType } from '../game.types';
 
 export class PurchaseDto {
   @ApiProperty({

@@ -2,12 +2,11 @@ import { Injectable } from '@nestjs/common';
 import type { GameRepository } from './game.repository';
 import { GameState, UpgradeType } from './game.types';
 import {
-  TICK_MS,
   CLICK_COOLDOWN_MS,
   BASE_CLICK,
-  CLICK_BONUS_PER_LEVEL,
-  AUTO_RATE_PER_LEVEL,
-  nextCost,
+  AUTO_MINER_INTERVALS,
+  SUPER_CLICK_COINS,
+  getUpgradeCost,
 } from './game.config';
 
 @Injectable()
@@ -15,120 +14,107 @@ export class GameService {
   constructor(private readonly repo: GameRepository) {}
 
   /**
-   * Computes the number of idle ticks elapsed between two timestamps.
-   * 
-   * @param last - The last activity timestamp
-   * @param now - Current timestamp (defaults to new Date())
-   * @returns Number of complete ticks elapsed
-   * 
-   * @invariant Returns non-negative integer
-   * @sideEffect None - pure calculation
-   */
-  private computeTicks(last: Date, now = new Date()) {
-    return Math.floor((now.getTime() - last.getTime()) / TICK_MS);
-  }
-
-  /**
-   * Retrieves the current game state for a user, applying any idle coin accrual.
-   * 
-   * @param userId - Unique identifier for the user
-   * @returns Promise resolving to current game state
-   * 
-   * @invariant Always returns valid GameState with non-negative coins
-   * @sideEffect May update database if idle coins need to be applied
-   * @sideEffect Creates new user record if user doesn't exist
+   * Get current game state, applying idle coins if auto-miner is active.
+   * @param userId - User identifier
+   * @returns Current game state with idle coins applied
    */
   async getState(userId: string) {
-    // apply idle accrual inside a small atomic op to avoid races
-    const state0 = await this.repo.getOrCreate(userId);
-    const ticks = this.computeTicks(state0.lastActivityAt, new Date());
-    if (ticks > 0 && state0.upgrades.autoMiner > 0) {
-      const perTick = state0.upgrades.autoMiner * AUTO_RATE_PER_LEVEL;
-      return this.repo.applyIdleAtomic(userId, ticks, perTick, new Date());
+    const state = await this.repo.getOrCreate(userId);
+    
+    // Apply idle coins if auto-miner is active
+    if (state.upgrades.autoMiner > 0) {
+      const now = new Date();
+      const timeSinceLastActivity = now.getTime() - state.lastActivityAt.getTime();
+      const autoMinerInterval = AUTO_MINER_INTERVALS[state.upgrades.autoMiner];
+      
+      if (timeSinceLastActivity >= autoMinerInterval) {
+        const coinsToAdd = Math.floor(timeSinceLastActivity / autoMinerInterval);
+        if (coinsToAdd > 0) {
+          return this.repo.applyIdleAtomic(userId, coinsToAdd, 1, now);
+        }
+      }
     }
-    return state0;
+    
+    return state;
   }
 
   /**
-   * Performs a mining action for a user, subject to cooldown restrictions.
-   * 
-   * @param userId - Unique identifier for the user
-   * @returns Promise resolving to updated game state after mining
-   * @throws Error with "cooldown:" prefix if cooldown is active
-   * 
-   * @invariant Enforces 5-second cooldown between mining actions
-   * @invariant Coin gain = BASE_CLICK + (superClick level * CLICK_BONUS_PER_LEVEL)
-   * @sideEffect Updates user's coin count and lastClickAt timestamp
-   * @sideEffect May apply idle coins before mining if time has elapsed
+   * Mine coins with cooldown enforcement.
+   * @param userId - User identifier
+   * @returns Updated game state after mining
+   * @throws Error if cooldown is active
    */
   async mine(userId: string) {
     const now = new Date();
-    let s = await this.getState(userId); // also applies idle
-    console.log('Mine called for user:', userId);
-    console.log('Current state:', { coins: s.coins, lastClickAt: s.lastClickAt });
+    const state = await this.getState(userId);
     
-    if (
-      s.lastClickAt &&
-      now.getTime() - s.lastClickAt.getTime() < CLICK_COOLDOWN_MS
-    ) {
-      const remainingMs =
-        CLICK_COOLDOWN_MS - (now.getTime() - s.lastClickAt.getTime());
-      console.log('Cooldown triggered:', remainingMs, 'ms remaining');
+    // Check cooldown
+    if (state.lastClickAt && now.getTime() - state.lastClickAt.getTime() < CLICK_COOLDOWN_MS) {
+      const remainingMs = CLICK_COOLDOWN_MS - (now.getTime() - state.lastClickAt.getTime());
       throw new Error(`cooldown:${Math.ceil(remainingMs / 1000)}s`);
     }
     
-    console.log('No cooldown, proceeding with mine');
-    const gain = BASE_CLICK + s.upgrades.superClick * CLICK_BONUS_PER_LEVEL;
-    s = await this.repo.mineAtomic(userId, gain, now);
-    console.log('After mine:', { coins: s.coins, lastClickAt: s.lastClickAt });
-    return s;
+    // Calculate coins based on super-click level
+    const coinsPerClick = SUPER_CLICK_COINS[state.upgrades.superClick];
+    return this.repo.mineAtomic(userId, coinsPerClick, now);
   }
 
   /**
-   * Attempts to purchase an upgrade for a user.
-   * 
-   * @param userId - Unique identifier for the user
-   * @param upgrade - Type of upgrade to purchase ('autoMiner' or 'superClick')
-   * @returns Promise resolving to updated game state after purchase
-   * @throws Error with "not_enough_coins" message if insufficient funds
-   * 
-   * @invariant Upgrade costs follow exponential scaling: baseCost * (1.15^currentLevel)
-   * @invariant Purchase is atomic - either succeeds completely or fails without changes
-   * @sideEffect Deducts coins and increments upgrade level on success
-   * @sideEffect May apply idle coins before purchase if time has elapsed
+   * Purchase an upgrade (max level 4).
+   * @param userId - User identifier
+   * @param upgrade - Upgrade type to purchase
+   * @returns Updated game state after purchase
+   * @throws Error if insufficient coins or max level reached
    */
   async purchase(userId: string, upgrade: UpgradeType) {
     const now = new Date();
-    const s0 = await this.getState(userId); // applies idle first
-    const level = s0.upgrades[upgrade];
-    const cost = nextCost(upgrade, level);
-    const res = await this.repo.purchaseAtomic(userId, upgrade, cost, now);
-    if (res === 'NOT_ENOUGH') {
+    const state = await this.getState(userId);
+    const currentLevel = state.upgrades[upgrade];
+    
+    // Check if already at max level
+    if (currentLevel >= 4) {
+      throw new Error('max_level_reached');
+    }
+    
+    const cost = getUpgradeCost(upgrade, currentLevel);
+    if (!cost) {
+      throw new Error('max_level_reached');
+    }
+    
+    const result = await this.repo.purchaseAtomic(userId, upgrade, cost, now);
+    if (result === 'NOT_ENOUGH') {
       throw new Error('not_enough_coins');
     }
-    return res;
+    return result;
   }
 
   /**
-   * Collects idle coins generated by auto-miners since last activity.
-   * 
-   * @param userId - Unique identifier for the user
-   * @returns Promise resolving to collection result with coins collected and updated state
-   * 
-   * @invariant Returns collected amount = ticks * autoMiner level * AUTO_RATE_PER_LEVEL
-   * @invariant Returns 0 collected if no auto-miners or no time elapsed
-   * @sideEffect Updates user's coin count and lastActivityAt timestamp
-   * @sideEffect No changes if no auto-miners owned or no time elapsed
+   * Collect idle coins from auto-miner.
+   * @param userId - User identifier
+   * @returns Collection result with coins collected and updated state
    */
   async collect(userId: string) {
     const now = new Date();
-    const s0 = await this.repo.getOrCreate(userId);
-    const ticks = this.computeTicks(s0.lastActivityAt, now);
-    if (ticks <= 0 || s0.upgrades.autoMiner <= 0) {
-      return { coins: s0.coins, collected: 0, state: s0 };
+    const state = await this.repo.getOrCreate(userId);
+    
+    if (state.upgrades.autoMiner === 0) {
+      return { coins: state.coins, collected: 0, state };
     }
-    const perTick = s0.upgrades.autoMiner * AUTO_RATE_PER_LEVEL;
-    const s1 = await this.repo.applyIdleAtomic(userId, ticks, perTick, now);
-    return { coins: s1.coins, collected: ticks * perTick, state: s1 };
+    
+    const timeSinceLastActivity = now.getTime() - state.lastActivityAt.getTime();
+    const autoMinerInterval = AUTO_MINER_INTERVALS[state.upgrades.autoMiner];
+    
+    if (timeSinceLastActivity < autoMinerInterval) {
+      return { coins: state.coins, collected: 0, state };
+    }
+    
+    const coinsToAdd = Math.floor(timeSinceLastActivity / autoMinerInterval);
+    const updatedState = await this.repo.applyIdleAtomic(userId, coinsToAdd, 1, now);
+    
+    return {
+      coins: updatedState.coins,
+      collected: coinsToAdd,
+      state: updatedState
+    };
   }
 }

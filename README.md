@@ -49,6 +49,23 @@ coin-miner/
   README.md
 ```
 
+## 📋 Requirements
+
+### Install Manually
+- **Node.js v18+**: [Download from nodejs.org](https://nodejs.org/)
+- **Docker**: [Get Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- **Git**: [Install Git](https://git-scm.com/downloads)
+
+### Installed via npm
+**Backend:**
+- NestJS, Prisma, PostgreSQL client, class-validator, Swagger
+
+**Frontend:**
+- React, Vite, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query
+
+**Dev Tools (VScode extensions):**
+- ESLint, Prettier, Jest, Vitest
+
 ## ⚙️ Running Locally
 
 ### 1. Start Postgres
