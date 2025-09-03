@@ -1,29 +1,71 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, HttpException, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { GameService } from './game.service';
-import { UpgradeType } from './game.types';
+import { PurchaseDto } from './dto/purchase.dto';
+import { GameStateDto } from './dto/game-state.dto';
+import { CollectResultDto } from './dto/collect-result.dto';
 
+@ApiTags('Game')
 @Controller()
 export class GameController {
   constructor(private readonly svc: GameService) {}
 
-  // In real app you'd get userId from auth/session; here accept body/query for simplicity
   @Get('state')
-  getState() {
-    return this.svc.getState('demo');
+  @ApiOperation({ summary: 'Get current game state for demo user' })
+  @ApiResponse({ status: 200, description: 'Current game state', type: GameStateDto })
+  async getState(): Promise<GameStateDto> {
+    try {
+      return await this.svc.getState('demo');
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Post('mine')
-  mine() {
-    return this.svc.mine('demo');
+  @ApiOperation({ summary: 'Mine coins (with 5s cooldown)' })
+  @ApiResponse({ status: 200, description: 'Updated game state after mining' })
+  @ApiResponse({ status: 400, description: 'Cooldown active' })
+  async mine() {
+    try {
+      return await this.svc.mine('demo');
+    } catch (error) {
+      if (error.message.includes('cooldown')) {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Post('purchase')
-  purchase(@Body() body: { upgrade: UpgradeType }) {
-    return this.svc.purchase('demo', body.upgrade);
+  @ApiOperation({ summary: 'Purchase an upgrade' })
+  @ApiBody({ 
+    type: PurchaseDto,
+    examples: {
+      autoMiner: { value: { upgrade: 'autoMiner' } },
+      superClick: { value: { upgrade: 'superClick' } }
+    }
+  })
+  @ApiResponse({ status: 200, description: 'Updated game state after purchase' })
+  @ApiResponse({ status: 400, description: 'Not enough coins' })
+  async purchase(@Body() body: PurchaseDto) {
+    try {
+      return await this.svc.purchase('demo', body.upgrade);
+    } catch (error) {
+      if (error.message.includes('not_enough_coins')) {
+        throw new HttpException('Not enough coins!', HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Post('collect')
-  collect() {
-    return this.svc.collect('demo');
+  @ApiOperation({ summary: 'Collect idle coins from auto-miners' })
+  @ApiResponse({ status: 200, description: 'Collected coins and updated state' })
+  async collect() {
+    try {
+      return await this.svc.collect('demo');
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }
