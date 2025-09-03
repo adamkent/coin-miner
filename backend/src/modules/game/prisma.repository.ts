@@ -72,13 +72,10 @@ export class PrismaRepository implements GameRepository {
       if (!user || !user.state) throw new Error('not_found');
 
       const inc = ticks * perTick;
-      const advanced = new Date(
-        user.state.lastActivityAt.getTime() + ticks * 5000,
-      );
 
       const state = await tx.playerState.update({
         where: { userId: userId },
-        data: { coins: { increment: inc }, lastActivityAt: advanced },
+        data: { coins: { increment: inc }, lastActivityAt: now },
       });
 
       return mapState(user, state, user.upgrades);
