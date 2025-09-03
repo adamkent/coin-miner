@@ -14,12 +14,24 @@ export class GameService {
   constructor(private readonly repo: GameRepository) {}
 
   /**
+   * Create a new user with initial game state.
+   * @param userId - User identifier
+   * @returns Created game state
+   */
+  async createUser(userId: string) {
+    return this.repo.createUser(userId);
+  }
+
+  /**
    * Get current game state, applying idle coins if auto-miner is active.
    * @param userId - User identifier
    * @returns Current game state with idle coins applied
    */
   async getState(userId: string) {
-    const state = await this.repo.getOrCreate(userId);
+    const state = await this.repo.getState(userId);
+    if (!state) {
+      throw new Error('User not found');
+    }
     
     // Apply idle coins if auto-miner is active
     if (state.upgrades.autoMiner > 0) {
@@ -46,7 +58,10 @@ export class GameService {
    */
   async mine(userId: string) {
     const now = new Date();
-    const state = await this.getState(userId);
+    const state = await this.repo.getState(userId);
+    if (!state) {
+      throw new Error('User not found');
+    }
     
     // Check cooldown
     if (state.lastClickAt && now.getTime() - state.lastClickAt.getTime() < CLICK_COOLDOWN_MS) {
@@ -68,7 +83,10 @@ export class GameService {
    */
   async purchase(userId: string, upgrade: UpgradeType) {
     const now = new Date();
-    const state = await this.getState(userId);
+    const state = await this.repo.getState(userId);
+    if (!state) {
+      throw new Error('User not found');
+    }
     const currentLevel = state.upgrades[upgrade];
     
     // Check if already at max level
@@ -95,7 +113,10 @@ export class GameService {
    */
   async collect(userId: string) {
     const now = new Date();
-    const state = await this.repo.getOrCreate(userId);
+    const state = await this.repo.getState(userId);
+    if (!state) {
+      throw new Error('User not found');
+    }
     
     if (state.upgrades.autoMiner === 0) {
       return { coins: state.coins, collected: 0, state };

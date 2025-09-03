@@ -1,6 +1,8 @@
 import { GameState } from './game.types';
 
 export interface GameRepository {
+  createUser(userId: string): Promise<GameState>;
+  getState(userId: string): Promise<GameState | null>;
   getOrCreate(userId: string): Promise<GameState>;
   save(state: GameState): Promise<void>;
   // Domain ops that need atomicity (implemented with Prisma transactions)

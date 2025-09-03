@@ -20,6 +20,26 @@ function mapState(user: any, state: any, upgrades: any[]): GameState {
 export class PrismaRepository implements GameRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
+  async createUser(userId: string): Promise<GameState> {
+    const user = await this.prisma.user.create({
+      data: {
+        id: userId,
+        state: { create: { coins: 0 } },
+      },
+      include: { state: true, upgrades: true },
+    });
+    return mapState(user, user.state, user.upgrades);
+  }
+
+  async getState(userId: string): Promise<GameState | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { state: true, upgrades: true },
+    });
+    if (!user || !user.state) return null;
+    return mapState(user, user.state, user.upgrades);
+  }
+
   async getOrCreate(userId: string): Promise<GameState> {
     const user = await this.prisma.user.upsert({
       where: { id: userId },

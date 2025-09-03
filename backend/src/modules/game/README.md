@@ -52,6 +52,7 @@ Core game logic for the coin mining game. Handles user state, mining actions, up
 - `POST /mine` - Mine coins (with cooldown)
 - `POST /purchase` - Buy upgrades
 - `POST /collect` - Collect idle coins
+- `POST /register` - Register a new player and return a unique display-friendly user ID
 
 ## Database Schema
 
