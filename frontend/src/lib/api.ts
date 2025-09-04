@@ -115,20 +115,20 @@ export const gameApi = {
 
 // Upgrade costs (matching backend config)
 export const UPGRADE_COSTS = {
-  autoMiner: [10, 100, 1000, 10000],
+  autoMiner: [10, 20, 40, 80],
   superClick: [5, 50, 500, 5000],
 };
 
 // Auto-miner intervals (matching backend config)
-export const AUTO_MINER_INTERVALS = [0, 30000, 20000, 15000, 10000]; // Level 0-4 in ms
+export const AUTO_MINER_INTERVALS = [0, 20000, 15000, 10000, 5000]; // Level 0-4 in ms
 
 // Upgrade effects descriptions
 export const UPGRADE_EFFECTS = {
   autoMiner: [
-    'Generates 1 coin/30s',
-    'Generates 1 coin/20s', 
-    'Generates 1 coin/15s',
-    'Generates 1 coin/10s'
+    'Generates 1 coin/20s',
+    'Generates 1 coin/15s', 
+    'Generates 1 coin/10s',
+    'Generates 1 coin/5s'
   ],
   superClick: [
     '+1 coin per click',

@@ -190,12 +190,16 @@ export function GameScreen({ userId, initialState }: GameScreenProps) {
                 Level {gameState.upgrades.autoMiner}/4 - {gameState.upgrades.autoMiner > 0 ? UPGRADE_EFFECTS.autoMiner[gameState.upgrades.autoMiner - 1] : "Not upgraded"}
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">
-                  {gameState.upgrades.autoMiner < 4 
-                    ? `Next: ${UPGRADE_COSTS.autoMiner[gameState.upgrades.autoMiner]} coins`
-                    : "Max level reached"
-                  }
-                </span>
+                <div className="text-sm">
+                  {gameState.upgrades.autoMiner < 4 ? (
+                    <div>
+                      <div>Next: {UPGRADE_EFFECTS.autoMiner[gameState.upgrades.autoMiner]}</div>
+                      <div className="text-xs text-muted-foreground">Cost: {UPGRADE_COSTS.autoMiner[gameState.upgrades.autoMiner]} coins</div>
+                    </div>
+                  ) : (
+                    "Max level reached"
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={() => handlePurchase('autoMiner')}
@@ -223,12 +227,16 @@ export function GameScreen({ userId, initialState }: GameScreenProps) {
                 Level {gameState.upgrades.superClick}/4 - {gameState.upgrades.superClick > 0 ? UPGRADE_EFFECTS.superClick[gameState.upgrades.superClick - 1] : "Not upgraded"}
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">
-                  {gameState.upgrades.superClick < 4 
-                    ? `Next: ${UPGRADE_COSTS.superClick[gameState.upgrades.superClick]} coins`
-                    : "Max level reached"
-                  }
-                </span>
+                <div className="text-sm">
+                  {gameState.upgrades.superClick < 4 ? (
+                    <div>
+                      <div>Next: {UPGRADE_EFFECTS.superClick[gameState.upgrades.superClick]}</div>
+                      <div className="text-xs text-muted-foreground">Cost: {UPGRADE_COSTS.superClick[gameState.upgrades.superClick]} coins</div>
+                    </div>
+                  ) : (
+                    "Max level reached"
+                  )}
+                </div>
                 <Button
                   onClick={() => handlePurchase('superClick')}
                   disabled={isLoading || gameState.upgrades.superClick >= 4}

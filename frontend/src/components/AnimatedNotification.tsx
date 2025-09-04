@@ -14,29 +14,36 @@ export function AnimatedNotification({
   onComplete,
   className 
 }: AnimatedNotificationProps) {
-  const [shouldRender, setShouldRender] = useState(false);
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
     if (isVisible) {
-      setShouldRender(true);
-      // Auto-hide after 3 seconds
+      setShow(true);
+      
+      // Auto-hide after 5 seconds
       const timer = setTimeout(() => {
-        setShouldRender(false);
-        onComplete?.();
-      }, 3000);
+        setShow(false);
+        // Call onComplete after animation finishes
+        setTimeout(() => {
+          onComplete?.();
+        }, 500);
+      }, 5000);
+      
       return () => clearTimeout(timer);
     }
   }, [isVisible, onComplete]);
 
-  if (!shouldRender) return null;
+  if (!isVisible) return null;
 
   return (
     <div
       className={cn(
         "fixed top-20 left-1/2 transform -translate-x-1/2 z-50",
         "bg-green-50 border border-green-200 text-green-800 px-6 py-3 rounded-lg shadow-lg",
-        "animate-in slide-in-from-top-2 duration-300",
         "font-medium text-sm",
+        !show 
+          ? "animate-out slide-out-to-top-2 fade-out duration-500" 
+          : "animate-in slide-in-from-top-2 fade-in duration-500",
         className
       )}
     >
