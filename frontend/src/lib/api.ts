@@ -116,7 +116,7 @@ export const gameApi = {
 // Upgrade costs (matching backend config)
 export const UPGRADE_COSTS = {
   autoMiner: [10, 20, 40, 80],
-  superClick: [5, 50, 500, 5000],
+  superClick: [5, 10, 20, 40],
 };
 
 // Auto-miner intervals (matching backend config)

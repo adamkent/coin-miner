@@ -25,9 +25,9 @@ export class GameController {
   constructor(private readonly svc: GameService) {}
 
   private generateUserId(): string {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substring(2, 8);
-    return `Player-${timestamp}${random}`.toUpperCase();
+    const uuid = crypto.randomUUID();
+    const shortId = uuid.replace(/-/g, '').substring(0, 6);
+    return `Player-${shortId}`.toUpperCase();
   }
 
   @Post('register')
@@ -80,7 +80,7 @@ export class GameController {
   })
   @ApiResponse({ status: 201, description: 'Updated game state after mining' })
   @ApiResponse({ status: 429, description: 'Cooldown active' })
-  async mine(@Query('userId') userId: string) {
+  async mine(@Query('userId') userId: string): Promise<GameStateDto> {
     if (!userId) {
       throw new HttpException(
         'userId query parameter is required',
@@ -117,7 +117,10 @@ export class GameController {
     description: 'Updated game state after purchase',
   })
   @ApiResponse({ status: 400, description: 'Not enough coins' })
-  async purchase(@Query('userId') userId: string, @Body() body: PurchaseDto) {
+  async purchase(
+    @Query('userId') userId: string,
+    @Body() body: PurchaseDto,
+  ): Promise<GameStateDto> {
     if (!userId) {
       throw new HttpException(
         'userId query parameter is required',
@@ -146,7 +149,7 @@ export class GameController {
     status: 201,
     description: 'Collected coins and updated state',
   })
-  async collect(@Query('userId') userId: string) {
+  async collect(@Query('userId') userId: string): Promise<any> {
     if (!userId) {
       throw new HttpException(
         'userId query parameter is required',

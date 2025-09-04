@@ -5,6 +5,7 @@ import {
   CLICK_COOLDOWN_MS,
   AUTO_MINER_INTERVALS,
   SUPER_CLICK_COINS,
+  MAX_UPGRADE_LEVEL,
   getUpgradeCost,
 } from './game.config';
 
@@ -96,7 +97,7 @@ export class GameService {
     const currentLevel = state.upgrades[upgrade];
 
     // Check if already at max level
-    if (currentLevel >= 4) {
+    if (currentLevel >= MAX_UPGRADE_LEVEL) {
       throw new Error('max_level_reached');
     }
 
