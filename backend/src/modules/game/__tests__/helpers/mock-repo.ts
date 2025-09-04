@@ -16,6 +16,7 @@ export class InMemoryRepo implements GameRepository {
       upgrades: { autoMiner: 0, superClick: 0 },
       lastActivityAt: now,
       lastClickAt: null,
+      lastAutoMinerCollectAt: now,
     };
     this.store.set(userId, structuredClone(state));
     return Promise.resolve(structuredClone(state));
@@ -36,6 +37,7 @@ export class InMemoryRepo implements GameRepository {
       upgrades: { autoMiner: 0, superClick: 0 },
       lastActivityAt: now,
       lastClickAt: null,
+      lastAutoMinerCollectAt: now,
     };
     this.store.set(userId, structuredClone(state));
     return Promise.resolve(structuredClone(state));
@@ -84,6 +86,7 @@ export class InMemoryRepo implements GameRepository {
     const state = await this.getOrCreate(userId);
     state.coins += ticks * perTick;
     state.lastActivityAt = now;
+    state.lastAutoMinerCollectAt = now;
     this.store.set(userId, structuredClone(state));
     return structuredClone(state);
   }

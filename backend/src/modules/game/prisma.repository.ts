@@ -28,6 +28,7 @@ function mapState(
     upgrades: u,
     lastActivityAt: state.lastActivityAt,
     lastClickAt: state.lastClickAt,
+    lastAutoMinerCollectAt: state.lastAutoMinerCollectAt,
   };
 }
 
@@ -92,7 +93,11 @@ export class PrismaRepository implements GameRepository {
 
       const state = await tx.playerState.update({
         where: { userId: userId },
-        data: { coins: { increment: inc }, lastActivityAt: now },
+        data: {
+          coins: { increment: inc },
+          lastActivityAt: now,
+          lastAutoMinerCollectAt: now,
+        },
       });
 
       return mapState(user, state, user.upgrades);

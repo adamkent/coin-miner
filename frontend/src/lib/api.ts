@@ -28,6 +28,8 @@ export interface GameState {
   lastActivityAt: string;
   /** Timestamp of last click action */
   lastClickAt: string | null;
+  /** Timestamp of last auto-miner collection */
+  lastAutoMinerCollectAt: string;
 }
 
 /**

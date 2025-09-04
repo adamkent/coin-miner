@@ -22,12 +22,13 @@ model User {
 }
 
 model PlayerState {
-  userId         String   @id
-  coins          Int      @default(0)
-  lastActivityAt DateTime @default(now())
-  lastClickAt    DateTime?
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id])
+  userId                 String   @id
+  coins                  Int      @default(0)
+  lastActivityAt         DateTime @default(now())
+  lastClickAt            DateTime?
+  lastAutoMinerCollectAt DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  user                   User     @relation(fields: [userId], references: [id])
 }
 
 model Upgrade {

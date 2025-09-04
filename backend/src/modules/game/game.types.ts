@@ -6,4 +6,5 @@ export interface GameState {
   upgrades: { autoMiner: number; superClick: number };
   lastActivityAt: Date;
   lastClickAt: Date | null;
+  lastAutoMinerCollectAt: Date;
 }

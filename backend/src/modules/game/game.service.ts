@@ -129,15 +129,17 @@ export class GameService {
       return { coins: state.coins, collected: 0, state };
     }
 
-    const timeSinceLastActivity =
-      now.getTime() - state.lastActivityAt.getTime();
+    const timeSinceLastAutoMinerCollect =
+      now.getTime() - state.lastAutoMinerCollectAt.getTime();
     const autoMinerInterval = AUTO_MINER_INTERVALS[state.upgrades.autoMiner];
 
-    if (timeSinceLastActivity < autoMinerInterval) {
+    if (timeSinceLastAutoMinerCollect < autoMinerInterval) {
       return { coins: state.coins, collected: 0, state };
     }
 
-    const coinsToAdd = Math.floor(timeSinceLastActivity / autoMinerInterval);
+    const coinsToAdd = Math.floor(
+      timeSinceLastAutoMinerCollect / autoMinerInterval,
+    );
     const updatedState = await this.repo.applyIdleAtomic(
       userId,
       coinsToAdd,

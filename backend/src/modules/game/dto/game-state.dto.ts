@@ -34,4 +34,10 @@ export class GameStateDto {
     nullable: true,
   })
   lastClickAt: Date | null;
+
+  @ApiProperty({
+    description: 'Timestamp of last auto-miner collection',
+    example: '2025-09-03T14:30:00.000Z',
+  })
+  lastAutoMinerCollectAt: Date;
 }
