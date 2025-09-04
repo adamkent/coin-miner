@@ -5,6 +5,7 @@ import { Separator } from "./ui/separator";
 import { Coins, Pickaxe, Zap } from "lucide-react";
 import { UpgradeBar } from "./UpgradeBar";
 import { FeedbackDialog } from "./FeedbackDialog";
+import { AnimatedNotification } from "./AnimatedNotification";
 import { gameApi, type GameState, UPGRADE_COSTS, UPGRADE_EFFECTS } from "../lib/api";
 
 interface GameScreenProps {
@@ -29,17 +30,30 @@ export function GameScreen({ userId, initialState }: GameScreenProps) {
     type: 'info'
   });
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const [notification, setNotification] = useState<{
+    message: string;
+    isVisible: boolean;
+  }>({
+    message: '',
+    isVisible: false
+  });
 
-  // Auto-refresh game state every 5 seconds
+  // Auto-collect passive income every 30 seconds
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const state = await gameApi.getState(userId);
-        setGameState(state);
+        const result = await gameApi.collect(userId);
+        if (result.collected > 0) {
+          setNotification({
+            message: `Earned ${result.collected} coins while idle!`,
+            isVisible: true
+          });
+          setGameState(result.state);
+        }
       } catch (error) {
-        // Silent refresh - don't show errors for background updates
+        // Silent collection - don't show errors for background updates
       }
-    }, 5000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [userId]);
@@ -234,6 +248,12 @@ export function GameScreen({ userId, initialState }: GameScreenProps) {
         title={feedback.title}
         message={feedback.message}
         type={feedback.type}
+      />
+
+      <AnimatedNotification
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onComplete={() => setNotification(prev => ({ ...prev, isVisible: false }))}
       />
     </div>
   );
