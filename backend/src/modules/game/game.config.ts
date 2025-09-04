@@ -11,9 +11,12 @@ export const SUPER_CLICK_COINS = [1, 2, 3, 4, 5]; // Level 0-4
 export const AUTO_MINER_COSTS = [10, 20, 40, 80]; // Levels 1-4
 export const SUPER_CLICK_COSTS = [5, 50, 500, 5000]; // Levels 1-4
 
-export function getUpgradeCost(upgrade: 'autoMiner' | 'superClick', currentLevel: number): number | null {
+export function getUpgradeCost(
+  upgrade: 'autoMiner' | 'superClick',
+  currentLevel: number,
+): number | null {
   if (currentLevel >= 4) return null; // Max level reached
-  
+
   const costs = upgrade === 'autoMiner' ? AUTO_MINER_COSTS : SUPER_CLICK_COSTS;
   return costs[currentLevel];
 }

@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type { GameRepository } from './game.repository';
-import { GameState, UpgradeType } from './game.types';
+import { UpgradeType } from './game.types';
 import {
   CLICK_COOLDOWN_MS,
-  BASE_CLICK,
   AUTO_MINER_INTERVALS,
   SUPER_CLICK_COINS,
   getUpgradeCost,
@@ -32,21 +31,24 @@ export class GameService {
     if (!state) {
       throw new Error('User not found');
     }
-    
+
     // Apply idle coins if auto-miner is active
     if (state.upgrades.autoMiner > 0) {
       const now = new Date();
-      const timeSinceLastActivity = now.getTime() - state.lastActivityAt.getTime();
+      const timeSinceLastActivity =
+        now.getTime() - state.lastActivityAt.getTime();
       const autoMinerInterval = AUTO_MINER_INTERVALS[state.upgrades.autoMiner];
-      
+
       if (timeSinceLastActivity >= autoMinerInterval) {
-        const coinsToAdd = Math.floor(timeSinceLastActivity / autoMinerInterval);
+        const coinsToAdd = Math.floor(
+          timeSinceLastActivity / autoMinerInterval,
+        );
         if (coinsToAdd > 0) {
           return this.repo.applyIdleAtomic(userId, coinsToAdd, 1, now);
         }
       }
     }
-    
+
     return state;
   }
 
@@ -62,13 +64,17 @@ export class GameService {
     if (!state) {
       throw new Error('User not found');
     }
-    
+
     // Check cooldown
-    if (state.lastClickAt && now.getTime() - state.lastClickAt.getTime() < CLICK_COOLDOWN_MS) {
-      const remainingMs = CLICK_COOLDOWN_MS - (now.getTime() - state.lastClickAt.getTime());
+    if (
+      state.lastClickAt &&
+      now.getTime() - state.lastClickAt.getTime() < CLICK_COOLDOWN_MS
+    ) {
+      const remainingMs =
+        CLICK_COOLDOWN_MS - (now.getTime() - state.lastClickAt.getTime());
       throw new Error(`cooldown:${Math.ceil(remainingMs / 1000)}s`);
     }
-    
+
     // Calculate coins based on super-click level
     const coinsPerClick = SUPER_CLICK_COINS[state.upgrades.superClick];
     return this.repo.mineAtomic(userId, coinsPerClick, now);
@@ -88,17 +94,17 @@ export class GameService {
       throw new Error('User not found');
     }
     const currentLevel = state.upgrades[upgrade];
-    
+
     // Check if already at max level
     if (currentLevel >= 4) {
       throw new Error('max_level_reached');
     }
-    
+
     const cost = getUpgradeCost(upgrade, currentLevel);
     if (!cost) {
       throw new Error('max_level_reached');
     }
-    
+
     const result = await this.repo.purchaseAtomic(userId, upgrade, cost, now);
     if (result === 'NOT_ENOUGH') {
       throw new Error('not_enough_coins');
@@ -117,25 +123,31 @@ export class GameService {
     if (!state) {
       throw new Error('User not found');
     }
-    
+
     if (state.upgrades.autoMiner === 0) {
       return { coins: state.coins, collected: 0, state };
     }
-    
-    const timeSinceLastActivity = now.getTime() - state.lastActivityAt.getTime();
+
+    const timeSinceLastActivity =
+      now.getTime() - state.lastActivityAt.getTime();
     const autoMinerInterval = AUTO_MINER_INTERVALS[state.upgrades.autoMiner];
-    
+
     if (timeSinceLastActivity < autoMinerInterval) {
       return { coins: state.coins, collected: 0, state };
     }
-    
+
     const coinsToAdd = Math.floor(timeSinceLastActivity / autoMinerInterval);
-    const updatedState = await this.repo.applyIdleAtomic(userId, coinsToAdd, 1, now);
-    
+    const updatedState = await this.repo.applyIdleAtomic(
+      userId,
+      coinsToAdd,
+      1,
+      now,
+    );
+
     return {
       coins: updatedState.coins,
       collected: coinsToAdd,
-      state: updatedState
+      state: updatedState,
     };
   }
 }

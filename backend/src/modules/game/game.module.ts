@@ -3,6 +3,7 @@ import { GameController } from './game.controller';
 import { GameService } from './game.service';
 import { PrismaClient } from '../../../generated/prisma';
 import { PrismaRepository } from './prisma.repository';
+import { GameRepository } from './game.repository';
 
 @Module({
   controllers: [GameController],
@@ -11,7 +12,7 @@ import { PrismaRepository } from './prisma.repository';
     { provide: 'GameRepository', useClass: PrismaRepository },
     {
       provide: GameService,
-      useFactory: (repo: any) => new GameService(repo),
+      useFactory: (repo: GameRepository) => new GameService(repo),
       inject: ['GameRepository'],
     },
   ],

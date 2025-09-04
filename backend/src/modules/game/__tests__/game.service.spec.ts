@@ -32,7 +32,10 @@ describe('GameService', () => {
     const autoMinerInterval = AUTO_MINER_INTERVALS[2];
     const s2Init = await repo.findById('u2');
     if (s2Init) {
-      s2Init.lastActivityAt = advance(s2Init.lastActivityAt, -3 * autoMinerInterval);
+      s2Init.lastActivityAt = advance(
+        s2Init.lastActivityAt,
+        -3 * autoMinerInterval,
+      );
       await repo.save(s2Init);
     }
     const s2 = await svc.getState('u2');

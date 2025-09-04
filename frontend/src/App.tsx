@@ -38,7 +38,7 @@ function App() {
       setGameState(initialState)
       
       showFeedback("Welcome!", `Player ${registerResponse.userId} created successfully!`, "success")
-    } catch (error: any) {
+    } catch {
       showFeedback("Error", "Failed to create new player. Please try again.", "error")
     } finally {
       setIsLoading(false)

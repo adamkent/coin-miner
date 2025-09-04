@@ -50,7 +50,7 @@ export function GameScreen({ userId, initialState }: GameScreenProps) {
           });
           setGameState(result.state);
         }
-      } catch (error) {
+      } catch {
         // Silent collection - don't show errors for background updates
       }
     }, 30000);
@@ -80,14 +80,17 @@ export function GameScreen({ userId, initialState }: GameScreenProps) {
       const newState = await gameApi.mine(userId);
       setGameState(newState);
       showFeedback("Success!", "You mined some coins!", "success");
-    } catch (error: any) {
-      if (error.response?.data?.message?.includes('cooldown')) {
-        const match = error.response.data.message.match(/cooldown:(\d+)s/);
+    } catch (error) {
+      const apiError = error as { response?: { data?: { message?: string } } };
+      const errorMessage = apiError.response?.data?.message || '';
+      
+      if (errorMessage.includes('cooldown')) {
+        const match = errorMessage.match(/cooldown:(\d+)s/);
         if (match) {
           setCooldownRemaining(parseInt(match[1]));
         }
         showFeedback("Cooldown Active", "Please wait before mining again.", "info");
-      } else if (error.response?.data?.message?.includes('User not found')) {
+      } else if (errorMessage.includes('User not found')) {
         showFeedback("Error", "User not found. Please restart the game.", "error");
       } else {
         showFeedback("Error", "Failed to mine coins. Please try again.", "error");
@@ -117,10 +120,13 @@ export function GameScreen({ userId, initialState }: GameScreenProps) {
       const newState = await gameApi.purchase(userId, upgradeType);
       setGameState(newState);
       showFeedback("Upgrade Purchased!", `${upgradeType === 'autoMiner' ? 'Auto Miner' : 'Super Click'} upgraded!`, "success");
-    } catch (error: any) {
-      if (error.response?.data?.message?.includes('not_enough_coins')) {
+    } catch (error) {
+      const apiError = error as { response?: { data?: { message?: string } } };
+      const errorMessage = apiError.response?.data?.message || '';
+      
+      if (errorMessage.includes('not_enough_coins')) {
         showFeedback("Not Enough Coins!", "You don't have enough coins for this upgrade.", "error");
-      } else if (error.response?.data?.message?.includes('max_level_reached')) {
+      } else if (errorMessage.includes('max_level_reached')) {
         showFeedback("Max Level", "This upgrade is already at maximum level!", "info");
       } else {
         showFeedback("Error", "Failed to purchase upgrade. Please try again.", "error");

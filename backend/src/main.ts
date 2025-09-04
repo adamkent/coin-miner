@@ -5,13 +5,15 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
-  
+
   // Enable validation for all endpoints
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true, // Strip properties that don't have decorators
-    forbidNonWhitelisted: true, // Throw error for extra properties
-    transform: true, // Transform payloads to DTO instances
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Strip properties that don't have decorators
+      forbidNonWhitelisted: true, // Throw error for extra properties
+      transform: true, // Transform payloads to DTO instances
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Coin Miner API')

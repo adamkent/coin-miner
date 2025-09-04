@@ -4,11 +4,11 @@ import { GameState } from '../../game.types';
 export class InMemoryRepo implements GameRepository {
   store = new Map<string, GameState>();
 
-  async findById(userId: string) {
-    return this.store.get(userId) ?? null;
+  findById(userId: string) {
+    return Promise.resolve(this.store.get(userId) ?? null);
   }
 
-  async createUser(userId: string): Promise<GameState> {
+  createUser(userId: string): Promise<GameState> {
     const now = new Date();
     const state: GameState = {
       userId,
@@ -18,16 +18,16 @@ export class InMemoryRepo implements GameRepository {
       lastClickAt: null,
     };
     this.store.set(userId, structuredClone(state));
-    return structuredClone(state);
+    return Promise.resolve(structuredClone(state));
   }
 
-  async getState(userId: string): Promise<GameState | null> {
-    return this.store.get(userId) ?? null;
+  getState(userId: string): Promise<GameState | null> {
+    return Promise.resolve(this.store.get(userId) ?? null);
   }
-  
-  async getOrCreate(userId: string): Promise<GameState> {
+
+  getOrCreate(userId: string): Promise<GameState> {
     const existing = this.store.get(userId);
-    if (existing) return structuredClone(existing);
+    if (existing) return Promise.resolve(structuredClone(existing));
 
     const now = new Date();
     const state: GameState = {
@@ -38,13 +38,14 @@ export class InMemoryRepo implements GameRepository {
       lastClickAt: null,
     };
     this.store.set(userId, structuredClone(state));
-    return structuredClone(state);
+    return Promise.resolve(structuredClone(state));
   }
-  
-  async save(state: GameState) {
+
+  save(state: GameState): Promise<void> {
     this.store.set(state.userId, structuredClone(state));
+    return Promise.resolve();
   }
-  
+
   async mineAtomic(
     userId: string,
     gain: number,
@@ -57,7 +58,7 @@ export class InMemoryRepo implements GameRepository {
     this.store.set(userId, structuredClone(state));
     return structuredClone(state);
   }
-  
+
   async purchaseAtomic(
     userId: string,
     upgrade: 'autoMiner' | 'superClick',
@@ -73,7 +74,7 @@ export class InMemoryRepo implements GameRepository {
     this.store.set(userId, structuredClone(state));
     return structuredClone(state);
   }
-  
+
   async applyIdleAtomic(
     userId: string,
     ticks: number,

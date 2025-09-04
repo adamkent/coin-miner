@@ -1,12 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '../../../generated/prisma';
+import {
+  PrismaClient,
+  User,
+  PlayerState,
+  Upgrade,
+} from '../../../generated/prisma';
 import { GameRepository } from './game.repository';
 import { GameState } from './game.types';
 
-function mapState(user: any, state: any, upgrades: any[]): GameState {
+type UserWithStateAndUpgrades = User & {
+  state: PlayerState | null;
+  upgrades: Upgrade[];
+};
+
+function mapState(
+  user: UserWithStateAndUpgrades,
+  state: PlayerState,
+  upgrades: Upgrade[],
+): GameState {
   const u = { autoMiner: 0, superClick: 0 };
-  for (const up of upgrades)
+  for (const up of upgrades) {
     u[up.type as 'autoMiner' | 'superClick'] = up.level;
+  }
   return {
     userId: user.id,
     coins: state.coins,
@@ -28,6 +43,7 @@ export class PrismaRepository implements GameRepository {
       },
       include: { state: true, upgrades: true },
     });
+    if (!user.state) throw new Error('State not created');
     return mapState(user, user.state, user.upgrades);
   }
 
@@ -36,7 +52,7 @@ export class PrismaRepository implements GameRepository {
       where: { id: userId },
       include: { state: true, upgrades: true },
     });
-    if (!user || !user.state) return null;
+    if (!user?.state) return null;
     return mapState(user, user.state, user.upgrades);
   }
 
@@ -50,12 +66,13 @@ export class PrismaRepository implements GameRepository {
       update: {},
       include: { state: true, upgrades: true },
     });
+    if (!user.state) throw new Error('State not found');
     return mapState(user, user.state, user.upgrades);
   }
 
-  async save(_state: GameState): Promise<void> {
+  save(): Promise<void> {
     // not used directly in this pattern; domain ops are atomic methods below
-    return;
+    return Promise.resolve();
   }
 
   async applyIdleAtomic(
@@ -124,7 +141,7 @@ export class PrismaRepository implements GameRepository {
       if (deducted.count === 0) return 'NOT_ENOUGH' as const;
 
       // Upsert upgrade level
-      const up = await tx.upgrade.upsert({
+      await tx.upgrade.upsert({
         where: { userId_type: { userId, type: upgrade } },
         create: { userId, type: upgrade, level: 1 },
         update: { level: { increment: 1 } },
