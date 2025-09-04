@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
 import { Button } from "./ui/button";
 
 interface FeedbackDialogProps {
@@ -21,10 +21,10 @@ export function FeedbackDialog({ isOpen, onClose, title, message, type = 'info' 
           }`}>
             {title}
           </DialogTitle>
+          <DialogDescription className="py-4">
+            {message}
+          </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-          <p className="text-sm text-muted-foreground">{message}</p>
-        </div>
         <DialogFooter>
           <Button onClick={onClose} className="w-full">
             OK
