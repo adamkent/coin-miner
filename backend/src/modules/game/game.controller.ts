@@ -79,7 +79,7 @@ export class GameController {
     example: 'Player-ABC123',
   })
   @ApiResponse({ status: 201, description: 'Updated game state after mining' })
-  @ApiResponse({ status: 400, description: 'Cooldown active' })
+  @ApiResponse({ status: 429, description: 'Cooldown active' })
   async mine(@Query('userId') userId: string) {
     if (!userId) {
       throw new HttpException(
@@ -91,6 +91,9 @@ export class GameController {
       return await this.svc.mine(userId);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error';
+      if (message.startsWith('cooldown:')) {
+        throw new HttpException(message, HttpStatus.TOO_MANY_REQUESTS);
+      }
       throw new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
