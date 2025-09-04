@@ -131,9 +131,9 @@ export const UPGRADE_EFFECTS = {
     'Generates 1 coin/5s'
   ],
   superClick: [
-    '+1 coin per click',
-    '+2 coins per click',
-    '+3 coins per click', 
-    '+4 coins per click'
+    '2 coins per click',
+    '3 coins per click',
+    '4 coins per click', 
+    '5 coins per click'
   ]
 };

@@ -27,6 +27,7 @@ The backend relies on the database for persistence.
 - `POST /mine` → mine coins (cooldown enforced)
 - `POST /purchase` → buy an upgrade
 - `POST /collect` → collect idle coins
+- `POST /register` → register a new player and get unique user ID
 
 ## 🏗️ Design Decisions
 
